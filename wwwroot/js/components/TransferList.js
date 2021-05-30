@@ -10,6 +10,8 @@ import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
 import Checkbox from '@material-ui/core/Checkbox';
 import Paper from '@material-ui/core/Paper';
+import Typography from '@material-ui/core/Typography';
+
 import meta from './meta';
 
 const styles = theme => ({
@@ -32,22 +34,20 @@ class TransferList extends Component {
 
         this.state = {
             checked: [],
-            left: [1, 2, 3, 4],
-            right: [5, 6, 7, 8],
-            entityType: this.props.entityType
+            listData: this.props.listData
         };
     }
 
     not(a, b) {
         return a.filter((value) => b.indexOf(value) === -1);
     }
-    
+
     intersection(a, b) {
         return a.filter((value) => b.indexOf(value) !== -1);
     }
 
-    leftChecked = () => this.intersection(this.state.checked, this.state.left);
-    rightChecked = () => this.intersection(this.state.checked, this.state.right);
+    availableItemsChecked = () => this.intersection(this.state.checked, this.state.listData.availableItems);
+    selectedItemsChecked = () => this.intersection(this.state.checked, this.state.listData.selectedItems);
 
     handleToggle(event, value) {
         const currentIndex = this.state.checked.indexOf(value);
@@ -62,42 +62,70 @@ class TransferList extends Component {
     };
 
     handleAllRight() {
-        this.setState({ 
-            right: this.state.right.concat(this.state.left), 
-            left: [] 
+        const listData = this.state.listData;
+        this.setState({
+            listData: {
+                ...listData,
+                selectedItems: listData.selectedItems.concat(listData.availableItems),
+                availableItems: []
+            }
+
         });
     };
 
     handleCheckedRight() {
-        this.setState({ 
-            right: this.state.right.concat(this.leftChecked()), 
-            left: this.not(this.state.left, this.leftChecked()),
-            checked: this.not(this.state.checked, this.leftChecked())
+        const listData = this.state.listData;
+        this.setState({
+            listData: {
+                ...listData,
+                selectedItems: listData.selectedItems.concat(this.availableItemsChecked()),
+                availableItems: this.not(listData.availableItems, this.availableItemsChecked()),
+            },
+            checked: this.not(this.state.checked, this.availableItemsChecked())
         });
     };
 
     handleCheckedLeft() {
-        this.setState({ 
-            right: this.not(this.state.right, this.rightChecked()), 
-            left: this.state.left.concat(this.rightChecked()),
-            checked: this.not(this.state.checked, this.rightChecked())
+        const listData = this.state.listData;
+        this.setState({
+            listData: {
+                ...listData,
+                selectedItems: this.not(listData.selectedItems, this.selectedItemsChecked()),
+                availableItems: listData.availableItems.concat(this.selectedItemsChecked()),
+            },
+            checked: this.not(this.state.checked, this.availableItemsChecked())
         });
     };
 
     handleAllLeft() {
-        this.setState({ 
-            right: [], 
-            left: this.state.left.concat(this.state.right)
+        const listData = this.state.listData;
+        this.setState({
+            listData: {
+                ...listData,
+                selectedItems: [],
+                availableItems: listData.availableItems.concat(listData.selectedItems)
+            }
         });
     };
 
-    getCustomList(items, classes) {
+    getCustomList(items, entityType, classes) {
         return (
             <Paper className={classes.paper}>
                 <List dense component="div" role="list">
                     {items.map((value) => {
-                        const labelId = `transfer-list-item-${value}-label`;
-                        return <ListItem key={value} role="listitem" button onClick={(event) => this.handleToggle(event, value)}>
+                        const labelId = `transfer-list-item-${value.id}-label`;
+                        let label;
+                        switch (entityType) {
+                            case meta.entityType.service: {
+                                label = value.name;
+                                break;
+                            }
+                            case meta.entityType.employee: {
+                                label = `${value.name} ${value.surname} - ${value.position}`;
+                                break;
+                            }
+                        }
+                        return <ListItem key={value.id} role="listitem" button onClick={(event) => this.handleToggle(event, value)}>
                             <ListItemIcon>
                                 <Checkbox
                                     checked={this.state.checked.indexOf(value) !== -1}
@@ -106,7 +134,7 @@ class TransferList extends Component {
                                     inputProps={{ 'aria-labelledby': labelId }}
                                 />
                             </ListItemIcon>
-                            <ListItemText id={labelId} primary={`List item ${value + 1}`} />
+                            <ListItemText id={labelId} primary={label} />
                         </ListItem>
                     })}
                     <ListItem />
@@ -115,59 +143,62 @@ class TransferList extends Component {
         )
     }
     render() {
-        const leftCheckedItems = this.leftChecked();
-        const rightCheckedItems = this.rightChecked();
+        const checkedAvailableItems = this.availableItemsChecked();
+        const checkedSelectedItems = this.selectedItemsChecked();
         const { classes } = this.props;
 
         return (
-            <Grid container spacing={2} justify="center" alignItems="center" className={classes.root}>
-                <Grid item>{this.getCustomList(this.state.left, classes)}</Grid>
-                <Grid item>
-                    <Grid container direction="column" alignItems="center">
-                        <Button
-                            variant="outlined"
-                            size="small"
-                            className={classes.button}
-                            onClick={this.handleAllRight.bind(this)}
-                            disabled={this.state.left.length === 0}
-                            aria-label="move all right"
-                        >
-                            ≫
+            <React.Fragment>
+            <Typography variant="h6" gutterBottom component="div"> {this.state.listData.title} </Typography>
+                <Grid container spacing={2} justify="center" alignItems="center" className={classes.root}>
+                    <Grid item>{this.getCustomList(this.state.listData.availableItems, this.state.listData.entityType, classes)}</Grid>
+                    <Grid item>
+                        <Grid container direction="column" alignItems="center">
+                            <Button
+                                variant="outlined"
+                                size="small"
+                                className={classes.button}
+                                onClick={this.handleAllRight.bind(this)}
+                                disabled={this.state.listData.availableItems.length === 0}
+                                aria-label="move all selectedItems"
+                            >
+                                ≫
                         </Button>
-                        <Button
-                            variant="outlined"
-                            size="small"
-                            className={classes.button}
-                            onClick={this.handleCheckedRight.bind(this)}
-                            disabled={leftCheckedItems.length === 0}
-                            aria-label="move selected right"
-                        >
-                            &gt;
+                            <Button
+                                variant="outlined"
+                                size="small"
+                                className={classes.button}
+                                onClick={this.handleCheckedRight.bind(this)}
+                                disabled={checkedAvailableItems.length === 0}
+                                aria-label="move selected selectedItems"
+                            >
+                                &gt;
                         </Button>
-                        <Button
-                            variant="outlined"
-                            size="small"
-                            className={classes.button}
-                            onClick={this.handleCheckedLeft.bind(this)}
-                            disabled={rightCheckedItems.length === 0}
-                            aria-label="move selected left"
-                        >
-                            &lt;
+                            <Button
+                                variant="outlined"
+                                size="small"
+                                className={classes.button}
+                                onClick={this.handleCheckedLeft.bind(this)}
+                                disabled={checkedSelectedItems.length === 0}
+                                aria-label="move selected availableItems"
+                            >
+                                &lt;
                         </Button>
-                        <Button
-                            variant="outlined"
-                            size="small"
-                            className={classes.button}
-                            onClick={this.handleAllLeft.bind(this)}
-                            disabled={this.state.right.length === 0}
-                            aria-label="move all left"
-                        >
-                            ≪
+                            <Button
+                                variant="outlined"
+                                size="small"
+                                className={classes.button}
+                                onClick={this.handleAllLeft.bind(this)}
+                                disabled={this.state.listData.selectedItems.length === 0}
+                                aria-label="move all availableItems"
+                            >
+                                ≪
                         </Button>
+                        </Grid>
                     </Grid>
+                    <Grid item>{this.getCustomList(this.state.listData.selectedItems, this.state.listData.entityType, classes)}</Grid>
                 </Grid>
-                <Grid item>{this.getCustomList(this.state.right, classes)}</Grid>
-            </Grid>
+            </React.Fragment>
         );
     }
 }

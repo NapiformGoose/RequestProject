@@ -22,60 +22,40 @@ export class CreateAndEditPopupView extends Component {
             submitHandler: this.props.submitHandler,
             currentFunctionType: this.props.functionType,
             mutableRow: this.props.mutableRow,
-            entityType: this.props.entityType,
-            collectionList: [],
+            entityType: this.props.entityType
         };
     }
 
-    static getDerivedStateFromProps(props, state) {
-        let newState = {};
-        if (props.submitHandler !== state.submitHandler) {
-            newState.submitHandler = props.submitHandler
-        }
-        if (props.currentFunctionType !== state.currentFunctionType) {
-            newState.currentFunctionType = props.currentFunctionType
-        }
-        if (props.mutableRow !== state.mutableRow) {
-            newState.mutableRow = props.mutableRow
-        }
-        if (props.entityType !== state.entityType) {
-            newState.entityType = props.entityType
-        }
-
-        if (newState.submitHandler || newState.currentFunctionType || newState.mutableRow || newState.entityType) {
-            return newState;
-        }
-        return null;
-    }
-
     async componentDidMount() {
-        await this._getTableData();
+        const employees = await Ajax.Employee.ListAll();
+        const services = await Ajax.Service.ListAll();
+
+        this.setState({
+            allEmployees: employees,
+            allServices: services
+        });
     }
 
     __getListData() {
         switch (this.state.entityType) {
-            case meta.entityType.employee: {
-                
-            }
-            case meta.entityType.service: {
-                return meta.serviceColumns;
-            }
             case meta.entityType.request: {
-                // const employeeCollection = await Ajax.Employee.ListAll();
-                // const serviceCollection = await Ajax.Service.ListAll();
-                const collectionList = [
+                const getAvailableItems = (allItems, checkedItems) => checkedItems.length === 0 ? allItems : allItems.filter((value) => checkedItems.indexOf(value) === -1);
+                const getSelectedItems= (checkedItems) => checkedItems.length === 0 ? [] : checkedItems;
+
+                return [
                     {
-                        collectionTitle: 'Работники',
-                        left: await Ajax.Employee.ListAll(),
-                        right: [],
+                        title: 'Работники',
+                        availableItems: getAvailableItems(this.state.allEmployees, this.state.mutableRow.employees),
+                        selectedItems: getSelectedItems(this.state.mutableRow.employees),
+                        entityType: meta.entityType.employee
                     },
                     {
-                        collectionTitle: 'Услуги',
-                        left: await Ajax.Service.ListAll(),
-                        right: [],
+                        title: 'Услуги',
+                        availableItems: getAvailableItems(this.state.allServices, this.state.mutableRow.services),
+                        selectedItems: getSelectedItems(this.state.mutableRow.services),
+                        entityType: meta.entityType.service
                     }
                 ];
-                this.setState({collectionList: collectionList})
             }
             default:
                 return [];
@@ -83,11 +63,13 @@ export class CreateAndEditPopupView extends Component {
     }
 
     __getLists() {
-        let lists;
-        this.state.collectionList.forEach(element => {
-            lists.push();
-    })
-}
+        const collectionList = this.__getListData();
+        return collectionList.map(element => {
+            if (element.availableItems && element.selectedItems) {
+                return <TransferList listData={element} />
+            }
+        });
+    }
 
     handleClose() {
         this.state.onClose()
@@ -173,7 +155,8 @@ export class CreateAndEditPopupView extends Component {
                             }
                         })
                         }
-                        <TransferList entityType={this.state.entityType} />
+                        {this.__getLists()}
+                        {/* <TransferList entityType={this.state.entityType} /> */}
                     </form>
 
                 </Container>

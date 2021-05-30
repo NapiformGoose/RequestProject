@@ -86,6 +86,7 @@ export class TableToolbar extends Component {
         this.setState({ isOpenDialog: false });
     }
 
+    isAddButtonDisabled = () => this.state.selectedRows.length >= 1 ? true : false;
     isEditButtonDisabled = () => this.state.selectedRows.length === 1 ? false : true;
     isDeleteButtonDisabled = () => this.state.selectedRows.length > 0 ? false : true;
 
@@ -130,7 +131,7 @@ export class TableToolbar extends Component {
             <React.Fragment>
                 {this.getPopupView()}
                 <Box className='tableToolbar'>
-                    <Button variant="contained" className='addButton' onClick={() => this.handleClick(meta.functionType.create)} startIcon={<AddIcon />}>
+                    <Button variant="contained" disabled={this.isAddButtonDisabled()} className='addButton' onClick={() => this.handleClick(meta.functionType.create)} startIcon={<AddIcon />}>
                         Добавить
                     </Button>
                     <Button variant="contained" disabled={this.isEditButtonDisabled()} className='editButton' onClick={() => this.handleClick(meta.functionType.edit)} startIcon={<EditIcon />}>

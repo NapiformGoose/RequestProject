@@ -150,6 +150,8 @@ export const requestTemplate = {
     creationDate: '',
     startDate: '',
     сompletionDate: '',
+    employees: [],
+    services: []
 }
 
 export default { 
