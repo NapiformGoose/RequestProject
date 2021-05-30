@@ -34,7 +34,8 @@ class TransferList extends Component {
 
         this.state = {
             checked: [],
-            listData: this.props.listData
+            listData: this.props.listData,
+            updateMutableRow: this.props.updateMutableRow
         };
     }
 
@@ -48,6 +49,19 @@ class TransferList extends Component {
 
     availableItemsChecked = () => this.intersection(this.state.checked, this.state.listData.availableItems);
     selectedItemsChecked = () => this.intersection(this.state.checked, this.state.listData.selectedItems);
+
+    onListChange(entityType, value) {
+        switch(entityType) {
+            case meta.entityType.employee: {
+                this.state.updateMutableRow('employees', value);
+                break;
+            }
+            case meta.entityType.service: {
+                this.state.updateMutableRow('services', value);
+                break;
+            }
+        }
+    }
 
     handleToggle(event, value) {
         const currentIndex = this.state.checked.indexOf(value);
@@ -63,55 +77,63 @@ class TransferList extends Component {
 
     handleAllRight() {
         const listData = this.state.listData;
+        const selectedItems = listData.selectedItems.concat(listData.availableItems);
         this.setState({
             listData: {
                 ...listData,
-                selectedItems: listData.selectedItems.concat(listData.availableItems),
+                selectedItems: selectedItems,
                 availableItems: []
             }
-
         });
+        this.onListChange(listData.entityType, selectedItems);
+
     };
 
     handleCheckedRight() {
         const listData = this.state.listData;
+        const selectedItems = listData.selectedItems.concat(this.availableItemsChecked());
         this.setState({
             listData: {
                 ...listData,
-                selectedItems: listData.selectedItems.concat(this.availableItemsChecked()),
+                selectedItems: selectedItems,
                 availableItems: this.not(listData.availableItems, this.availableItemsChecked()),
             },
             checked: this.not(this.state.checked, this.availableItemsChecked())
         });
+        this.onListChange(listData.entityType, selectedItems);
     };
 
     handleCheckedLeft() {
         const listData = this.state.listData;
+        const selectedItems = this.not(listData.selectedItems, this.selectedItemsChecked());
         this.setState({
             listData: {
                 ...listData,
-                selectedItems: this.not(listData.selectedItems, this.selectedItemsChecked()),
+                selectedItems: selectedItems,
                 availableItems: listData.availableItems.concat(this.selectedItemsChecked()),
             },
             checked: this.not(this.state.checked, this.availableItemsChecked())
         });
+        this.onListChange(listData.entityType, selectedItems);
     };
 
     handleAllLeft() {
         const listData = this.state.listData;
+        const selectedItems = [];
         this.setState({
             listData: {
                 ...listData,
-                selectedItems: [],
+                selectedItems: selectedItems,
                 availableItems: listData.availableItems.concat(listData.selectedItems)
             }
         });
+        this.onListChange(listData.entityType, selectedItems);
     };
 
     getCustomList(items, entityType, classes) {
         return (
             <Paper className={classes.paper}>
-                <List dense component="div" role="list">
+                <List dense component="div" role="list" >
                     {items.map((value) => {
                         const labelId = `transfer-list-item-${value.id}-label`;
                         let label;

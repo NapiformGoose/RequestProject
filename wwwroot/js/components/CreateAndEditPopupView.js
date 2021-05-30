@@ -27,13 +27,18 @@ export class CreateAndEditPopupView extends Component {
     }
 
     async componentDidMount() {
-        const employees = await Ajax.Employee.ListAll();
-        const services = await Ajax.Service.ListAll();
-
-        this.setState({
-            allEmployees: employees,
-            allServices: services
-        });
+        switch(this.state.entityType) {
+            case meta.entityType.request: {
+                const employees = await Ajax.Employee.ListAll();
+                const services = await Ajax.Service.ListAll();
+        
+                this.setState({
+                    allEmployees: employees,
+                    allServices: services
+                });
+                break;
+            }
+        }
     }
 
     __getListData() {
@@ -62,11 +67,11 @@ export class CreateAndEditPopupView extends Component {
         }
     }
 
-    __getLists() {
+    __getTransferLists() {
         const collectionList = this.__getListData();
         return collectionList.map(element => {
             if (element.availableItems && element.selectedItems) {
-                return <TransferList listData={element} />
+                return <TransferList listData={element} updateMutableRow={this.updateMutableRow.bind(this)} />
             }
         });
     }
@@ -77,10 +82,14 @@ export class CreateAndEditPopupView extends Component {
 
     handleChange = (event) => {
         event.preventDefault();
-        let newRow = this.state.mutableRow;
-        newRow[event.target.id] = event.target.value;
-        this.setState({ mutableRow: newRow });
+        this.updateMutableRow(event.target.id, event.target.value);
     };
+
+    updateMutableRow(key, value) {
+        let newRow = this.state.mutableRow;
+        newRow[key] = value;
+        this.setState({ mutableRow: newRow });
+    }
 
     handleClick() {
         this.state.submitHandler(this.state.mutableRow)
@@ -155,8 +164,7 @@ export class CreateAndEditPopupView extends Component {
                             }
                         })
                         }
-                        {this.__getLists()}
-                        {/* <TransferList entityType={this.state.entityType} /> */}
+                        {this.__getTransferLists()}
                     </form>
 
                 </Container>
