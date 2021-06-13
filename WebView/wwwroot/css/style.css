@@ -1,0 +1,48 @@
+.custom-btn {
+  background: #fff;
+  color: red;
+  border: 2px solid red;
+  border-radius: 3px;
+  padding: 5px 10px;
+  text-transform: uppercase;
+}
+
+.app {
+  display: flex;
+}
+
+.navigationView {
+  flex: 0 0 auto;
+}
+
+.mainLayout {
+  padding: 2vh;
+  height: 100vh;
+  flex-grow: 1;
+  padding-top: 11vh;
+}
+
+.mainBody {
+  padding-top: 32px;
+  padding-bottom: 32px;
+}
+
+.tableToolbar {
+  margin-bottom: 4vh;
+}
+
+.createEmployeeView {
+  min-width: 500px;
+  min-height: 500px;
+}
+
+.addButton {
+  background: #b5e3bd;
+}
+.editButton {
+  background: #ffe3b1;
+}
+.deleteButton {
+  background: #ffa7a0;
+}
+
